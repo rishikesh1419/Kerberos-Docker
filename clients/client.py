@@ -27,6 +27,10 @@ def connect_tgs(packet1, key1) :
     # decrypt packet1 using key1 (DES)
     #
     packet1 = packet1.split(",")
+    if len(packet1) != 2 :
+        print("Invalid credentials!")
+        exit(0)
+    # check exit(0)
     c_tgs_key = packet1[0]
     ticket1 = packet1[1]
     timestamp = datetime.now().strftime("%d-%b-%Y (%H:%M:%S.%f)")
@@ -49,6 +53,10 @@ def connect_tgs(packet1, key1) :
 
 def connect_server(packet3, c_tgs_key) :
     packet3 = packet3.split(",")
+    if len(packet1) != 2 :
+        print("Invalid credentials!")
+    exit(0)
+    # check exit(0)
     ticket2 = packet3[0]
     ticket3 = packet3[1]
     #
