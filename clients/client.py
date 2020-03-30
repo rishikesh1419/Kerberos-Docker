@@ -74,9 +74,9 @@ def connect_server(packet3, c_tgs_key) :
     clientsocket.send(packet4.encode())
     timestamp_enc = clientsocket.recv(1024).decode()
     #
-    # Decrypt timestamp using key2 (DES)
+    # Decrypt timestamp_enc using key2 (DES)
     #
-    timestamp1 = ""
+    timestamp1 = "temp"
     if timestamp - timestamp1 == 1 :
         return True, clientsocket, key2
     else :
