@@ -1,5 +1,4 @@
 import socket
-import des
 from datetime import datetime
 import redis
 from Crypto.Cipher import AES

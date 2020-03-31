@@ -1,4 +1,3 @@
-import des
 import socket
 from datetime import datetime
 from Crypto.Cipher import AES
@@ -54,7 +53,7 @@ def connect_tgs(packet1a, key1) :
     clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     clientsocket.connect((tgs_addr, tgs_port))
     clientsocket.send(packet2)
-    packet3 = clientsocket.recv(1024).decode()
+    packet3 = clientsocket.recv(1024)
     clientsocket.close()
     return packet3, c_tgs_key
 
@@ -66,42 +65,49 @@ def connect_server(packet3, c_tgs_key) :
     # check exit(0)
     ticket2 = packet3[0]
     ticket3 = packet3[1]
+    cipher = AES.new(c_tgs_key, AES.MODE_ECB)
+    ticket2a = cipher.decrypt(ticket2)
+    ticket2b = unpad(ticket2a, 16)
+    ticket2c = ticket2b.split(b",,,")
+    key2 = ticket2c[1]
+    timestamp1 = datetime.now().strftime("%d-%b-%Y (%H:%M:%S.%f)").encode()
     #
-    # Decrypt ticket2 using c_tgs_key to get key2 (DES)
+    # TIMESTAMP FORMAT
     #
-    key2 = "temp"
-    timestamp = datetime.now().strftime("%d-%b-%Y (%H:%M:%S.%f)")
-    #
-    # Encrypt timestamp with key2 (DES)
+    cipher2 = AES.new(key2, AES.MODE_ECB)
+    timestamp1a = pad(timestamp1, 16)
+    timestamp = cipher2.encrypt(timestamp1a)
     packet4 = timestamp + b",,," + ticket3
     server_addr = socket.gethostname()
     server_port = 4000
     clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     clientsocket.connect((server_addr, server_port))
-    clientsocket.send(packet4.encode())
-    timestamp_enc = clientsocket.recv(1024).decode()
+    clientsocket.send(packet4)
+    timestamp_enc = clientsocket.recv(1024)
+    timestamp1a = cipher2.decrypt(timestamp_enc)
+    timestamp1 = unpad(timestamp1a, 16)
     #
-    # Decrypt timestamp_enc using key2 (DES)
+    # TIMESTAMP FORMAT
     #
-    timestamp1 = "temp"
     if timestamp - timestamp1 == 1 :
         return True, clientsocket, key2
     else :
         return False, clientsocket, key2
 
 def communicate_server(clientsocket, key2) :
-    text = input("Enter string: ")
-    while text != "EXIT" :
-        #
-        # Encrypt text using key2 (DES)
-        #
-        clientsocket.send(text.encode())
-        reply = clientsocket.recv(1024).decode()
-        #
-        # Decrypt reply using key2 (DES)
-        #
-        print("Received result:",reply)
-        text = input("Enter string: ")
+    text = input("Enter string: ").encode()
+    while text != b"EXIT" :
+
+        cipher = AES.new(key2, AES.MODE_ECB)
+        text1 = pad(text, 16)
+        text1a = cipher.encrypt(text1)
+        clientsocket.send(text1a)
+        reply1a = clientsocket.recv(1024)
+        reply1 = cipher.decrypt(reply1a)
+        reply = unpad(reply1, 16)
+
+        print("Received result:",reply.decode())
+        text = input("Enter string: ").encode()
     clientsocket.close()
 
 

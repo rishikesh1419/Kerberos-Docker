@@ -1,4 +1,3 @@
-import des
 import socket
 from datetime import datetime
 
