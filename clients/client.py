@@ -1,14 +1,15 @@
 import des
 import socket
 from datetime import datetime
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad, unpad
 
 def take_input() :
     uname = input("Enter username: ")
-    pw = input("Enter password: ")
-    #
-    # create key1 using pw (DES)
-    #
-    key1 = "temp"
+    pw = input("Enter your 16-digit password: ").encode()
+    word = b'cloud  computing'
+    cipher = AES.new(pw, AES.MODE_ECB)
+    key1 = cipher.encrypt(word)
     return uname, key1
 
 def connect_as(uname) :
@@ -17,42 +18,48 @@ def connect_as(uname) :
     clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     clientsocket.connect((as_addr, as_port))
     clientsocket.send(uname.encode())
-    packet1 = clientsocket.recv(1024).decode()
+    packet1 = clientsocket.recv(1024)
     clientsocket.send("DONE".encode())
     clientsocket.close()
     return packet1
 
-def connect_tgs(packet1, key1) :
+def connect_tgs(packet1a, key1) :
     #
     # decrypt packet1 using key1 (DES)
     #
-    packet1 = packet1.split(",")
+    cipher = AES.new(key1, AES.MODE_ECB)
+    packet1b = cipher.decrypt(packet1a)
+    packet1 = unpad(packet1b, 16)
+    packet1 = packet1.split(b",,,")
     if len(packet1) != 2 :
         print("Invalid credentials!")
         exit(0)
     # check exit(0)
     c_tgs_key = packet1[0]
     ticket1 = packet1[1]
-    timestamp = datetime.now().strftime("%d-%b-%Y (%H:%M:%S.%f)")
+    timestamp1 = datetime.now().strftime("%d-%b-%Y (%H:%M:%S.%f)").encode()
     #
-    # Encrypt timestamp using c_tgs_key
+    # TIMESTAMP FORMAT
     #
-    serverID = input("Enter serverID: ")
+    cipher2 = AES.new(c_tgs_key, AES.MODE_ECB)
+    timestamp1a = pad(timestamp1, 16)
+    timestamp = cipher2.encrypt(timestamp1a)
+    serverID = input("Enter serverID: ").encode()
     #
     # Give choices
     #
-    packet2 = serverID + "," + timestamp + "," + ticket1
+    packet2 = serverID + b",,," + timestamp + b",,," + ticket1
     tgs_addr = socket.gethostname() # TGS IP
     tgs_port = 3000 # TGS Port
     clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     clientsocket.connect((tgs_addr, tgs_port))
-    clientsocket.send(packet2.encode())
+    clientsocket.send(packet2)
     packet3 = clientsocket.recv(1024).decode()
     clientsocket.close()
     return packet3, c_tgs_key
 
 def connect_server(packet3, c_tgs_key) :
-    packet3 = packet3.split(",")
+    packet3 = packet3.split(b",,,")
     if len(packet1) != 2 :
         print("Invalid credentials!")
     exit(0)
@@ -66,7 +73,7 @@ def connect_server(packet3, c_tgs_key) :
     timestamp = datetime.now().strftime("%d-%b-%Y (%H:%M:%S.%f)")
     #
     # Encrypt timestamp with key2 (DES)
-    packet4 = timestamp + "," + ticket3
+    packet4 = timestamp + b",,," + ticket3
     server_addr = socket.gethostname()
     server_port = 4000
     clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -108,3 +115,6 @@ def main() :
         communicate_server(clientsocket, key2)
     else :
         print("Error in comminucation, try again later.")
+
+if __name__ == '__main__' :
+    main()

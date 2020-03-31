@@ -12,7 +12,7 @@ def main() :
         clientsocket, addr = serversocket.accept()
         print("Client connected!")
         packet2 = clientsocket.recv(1024).decode()
-        packet2 = packet2.split(",")
+        packet2 = packet2.split(",,,")
         if len(packet2) != 3 :
             # do something
         else :
@@ -22,7 +22,7 @@ def main() :
             #
             # Decrypt ticket1 using private as_tgs_key (RSA)
             #
-            ticket1 = ticket1.split(",")
+            ticket1 = ticket1.split(",,,")
             if len(ticket1) != 2 :
                 # do something
             else :
@@ -40,15 +40,15 @@ def main() :
                     # generate client-server-session-key key2 (DES)
                     #
                     key2 = "temp"
-                    ticket2 = serverID + "," + key2
+                    ticket2 = serverID + ",,," + key2
                     #
                     # Encrypt ticket2 using c_tgs_key (DES)
                     #
-                    ticket3 = uname + "," + key2
+                    ticket3 = uname + ",,," + key2
                     #
                     # Encrypt ticket3 using public tgs_server_key (RSA)
                     #
-                    packet3 = ticket2 + "," + ticket3
+                    packet3 = ticket2 + ",,," + ticket3
                     clientsocket.send(packet3)
                     print("Tickets send to client,"uname)
                     clientsocket.close()
