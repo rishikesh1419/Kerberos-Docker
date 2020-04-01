@@ -3,11 +3,15 @@ from datetime import datetime
 import redis
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
+import rsa
 
 
 
 def main() :
     r = redis.Redis()
+    with open('pub_as_tgs.pem', mode='rb') as private1file:
+        keydata = private1file.read()
+        pub_as_tgs = rsa.PublicKey.load_pkcs1(keydata)
     word = b'cloud  computing'
     serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     as_addr = socket.gethostname()
@@ -23,10 +27,9 @@ def main() :
         cipher = AES.new(pw, AES.MODE_ECB)
         key1 = cipher.encrypt(word)
         c_tgs_key = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(16)).encode()
-        ticket1 = uname + b",,," + c_tgs_key
-        #
+        ticket1c = uname + b",,," + c_tgs_key
+        ticket1 = rsa.encrypt(ticket1c, pub_as_tgs)
         # Encrypt ticket1 using public as_tgs_key (RSA)
-        #
         packet1a = c_tgs_key + b",,," + ticket1
         packet1b = pad(packet1a, 16)
         cipher = AES.new(key1, AES.MODE_ECB)

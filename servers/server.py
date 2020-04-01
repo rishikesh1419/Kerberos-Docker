@@ -2,18 +2,23 @@ import socket
 from datetime import datetime
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
+import rsa
 
 def check(clientsocket) :
     #
     # RETURN FALSE ???????
     #
+    with open('pri_tgs_server.pem', mode='rb') as private1file:
+        keydata = private1file.read()
+        pri_tgs_server = rsa.PublicKey.load_pkcs1(keydata)
     packet4 = clientsocket.recv(1024)
     packet4 = packet4.split(b",,,")
     if len(packet4) != 2 :
         # do something
     else :
         timestamp = packet4[0]
-        ticket3 = packet4[1]
+        ticket3a = packet4[1]
+        ticket3 = rsa.decrypt(ticket3a, pri_tgs_server)
         #
         # Decrypt ticket3 using private as_tgs_key (RSA)
         #
