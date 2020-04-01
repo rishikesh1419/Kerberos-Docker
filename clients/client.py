@@ -2,6 +2,8 @@ import socket
 from datetime import datetime
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
+from datetime import datetime
+import time
 
 def take_input() :
     uname = input("Enter username: ")
@@ -23,9 +25,6 @@ def connect_as(uname) :
     return packet1
 
 def connect_tgs(packet1a, key1) :
-    #
-    # decrypt packet1 using key1 (DES)
-    #
     cipher = AES.new(key1, AES.MODE_ECB)
     packet1b = cipher.decrypt(packet1a)
     packet1 = unpad(packet1b, 16)
@@ -36,10 +35,8 @@ def connect_tgs(packet1a, key1) :
     # check exit(0)
     c_tgs_key = packet1[0]
     ticket1 = packet1[1]
-    timestamp1 = datetime.now().strftime("%d-%b-%Y (%H:%M:%S.%f)").encode()
-    #
+    timestamp1 = str(datetime.utcnow()).encode()
     # TIMESTAMP FORMAT
-    #
     cipher2 = AES.new(c_tgs_key, AES.MODE_ECB)
     timestamp1a = pad(timestamp1, 16)
     timestamp = cipher2.encrypt(timestamp1a)
@@ -70,10 +67,8 @@ def connect_server(packet3, c_tgs_key) :
     ticket2b = unpad(ticket2a, 16)
     ticket2c = ticket2b.split(b",,,")
     key2 = ticket2c[1]
-    timestamp1 = datetime.now().strftime("%d-%b-%Y (%H:%M:%S.%f)").encode()
-    #
+    timestamp1 = str(datetime.utcnow()).encode()
     # TIMESTAMP FORMAT
-    #
     cipher2 = AES.new(key2, AES.MODE_ECB)
     timestamp1a = pad(timestamp1, 16)
     timestamp = cipher2.encrypt(timestamp1a)
@@ -84,12 +79,11 @@ def connect_server(packet3, c_tgs_key) :
     clientsocket.connect((server_addr, server_port))
     clientsocket.send(packet4)
     timestamp_enc = clientsocket.recv(1024)
-    timestamp1a = cipher2.decrypt(timestamp_enc)
-    timestamp1 = unpad(timestamp1a, 16)
-    #
+    timestamp2a = cipher2.decrypt(timestamp_enc)
+    timestamp2b = unpad(timestamp2a, 16)
+    timestamp2 = datetime.strptime(timestamp2b.decode(), "%Y-%m-%d %H:%M:%S.%f")
     # TIMESTAMP FORMAT
-    #
-    if timestamp - timestamp1 == 1 :
+    if (timestamp1 - timestamp2).seconds == 1 :
         return True, clientsocket, key2
     else :
         return False, clientsocket, key2

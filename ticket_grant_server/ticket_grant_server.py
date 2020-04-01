@@ -38,12 +38,11 @@ def main() :
                 cipher = AES.new(c_tgs_key, AES.MODE_ECB)
                 timestamp1 = cipher.decrypt(timestamp)
                 timestamp1a = unpad(timestamp1, 16)
-                #
-                # 
+                timestamp1b = datetime.strptime(timestamp1a.decode(), "%Y-%m-%d %H:%M:%S.%f")
+                timestamp = datetime.utcnow()
                 # Check timestamp validity
-                #
                 # if invalid
-                if False :
+                if (timestamp - timestamp1b).seconds > 60 :
                     # do something
                 else :
                     key2 = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(16)).encode()
