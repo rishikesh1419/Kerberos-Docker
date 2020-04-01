@@ -4,6 +4,8 @@ import redis
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
 import rsa
+import random
+import string
 
 
 
@@ -36,5 +38,8 @@ def main() :
         packet1 = cipher.encrypt(packet1b)
 
         clientsocket.send(packet1)
-        print("Ticket sent to client",uanme)
+        print("Ticket sent to client",uname.decode())
         clientsocket.close()
+
+if __name__ == '__main__' :
+    main()

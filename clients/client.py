@@ -27,10 +27,11 @@ def connect_as(uname) :
 def connect_tgs(packet1a, key1) :
     cipher = AES.new(key1, AES.MODE_ECB)
     packet1b = cipher.decrypt(packet1a)
+    print(packet1b)
     packet1 = unpad(packet1b, 16)
     packet1 = packet1.split(b",,,")
     if len(packet1) != 2 :
-        print("Invalid credentials!")
+        print("Invalid credentials 1!")
         exit(0)
     # check exit(0)
     c_tgs_key = packet1[0]
@@ -51,15 +52,16 @@ def connect_tgs(packet1a, key1) :
     clientsocket.connect((tgs_addr, tgs_port))
     clientsocket.send(packet2)
     packet3 = clientsocket.recv(1024)
-    clientsocket.close()
+    # clientsocket.close()
     return packet3, c_tgs_key
 
 def connect_server(packet3, c_tgs_key) :
+    print("Inside connect_server")
     packet3 = packet3.split(b",,,")
-    if len(packet1) != 2 :
-        print("Invalid credentials!")
-    exit(0)
-    # check exit(0)
+    if len(packet3) != 2 :
+        print("Invalid credentials 2!")
+        exit(0)
+        # check exit(0)
     ticket2 = packet3[0]
     ticket3 = packet3[1]
     cipher = AES.new(c_tgs_key, AES.MODE_ECB)
@@ -83,10 +85,11 @@ def connect_server(packet3, c_tgs_key) :
     timestamp2b = unpad(timestamp2a, 16)
     timestamp2 = datetime.strptime(timestamp2b.decode(), "%Y-%m-%d %H:%M:%S.%f")
     # TIMESTAMP FORMAT
+    timestamp1 = datetime.strptime(timestamp1.decode(), "%Y-%m-%d %H:%M:%S.%f")
     if (timestamp1 - timestamp2).seconds == 1 :
-        return True, clientsocket, key2
+        return "True", clientsocket, key2
     else :
-        return False, clientsocket, key2
+        return "False", clientsocket, key2
 
 def communicate_server(clientsocket, key2) :
     text = input("Enter string: ").encode()
@@ -111,7 +114,7 @@ def main() :
     packet1 = connect_as(uname)
     packet3, c_tgs_key = connect_tgs(packet1, key1)
     reply, clientsocket, key2 = connect_server(packet3, c_tgs_key)
-    if reply :
+    if reply == "True" :
         communicate_server(clientsocket, key2)
     else :
         print("Error in comminucation, try again later.")

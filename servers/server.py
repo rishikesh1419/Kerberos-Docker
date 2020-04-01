@@ -10,10 +10,11 @@ def check(clientsocket) :
     #
     with open('pri_tgs_server.pem', mode='rb') as private1file:
         keydata = private1file.read()
-        pri_tgs_server = rsa.PublicKey.load_pkcs1(keydata)
+        pri_tgs_server = rsa.PrivateKey.load_pkcs1(keydata)
     packet4 = clientsocket.recv(1024)
     packet4 = packet4.split(b",,,")
     if len(packet4) != 2 :
+        print("error")
         # do something
     else :
         timestamp = packet4[0]
@@ -22,6 +23,7 @@ def check(clientsocket) :
         # Decrypt ticket3 using private as_tgs_key (RSA)
         ticket3 = ticket3.split(b",,,")
         if len(ticket3) != 2 :
+            print("error")
             # do something
         else :
             uname = ticket3[0]
@@ -44,8 +46,9 @@ def check(clientsocket) :
                 timestamp1b = str(timestamp1c).encode()
                 timestamp1a = pad(timestamp1b, 16)
                 timestamp1 = cipher2.encrypt(timestamp1a)
-                clientsocket.send(timestamp1.encode())
-                return True, uname, key2
+                clientsocket.send(timestamp1)
+                print("check done")
+                return "True", uname, key2
                     
 
 def serve(clientsocket, uname, key2) :
@@ -58,8 +61,9 @@ def serve(clientsocket, uname, key2) :
         if (time2 - time1).seconds > 60:
             # do something, send msg, etc...
             clientsocket.close()
+            break
         else :
-            packetb = clientsocket.recv(1024)
+            packet5b = clientsocket.recv(1024)
             cipher2 = AES.new(key2, AES.MODE_ECB)
             packet5a = cipher2.decrypt(packet5b)
             packet5 = unpad(packet5a, 16)
@@ -86,8 +90,12 @@ def main() :
         clientsocket, addr = serversocket.accept()
         print("Client connected!")
         result, uname, key2 = check(clientsocket)
-        if result :
-            serve(clientsocket, key2)
+        print(key2)
+        if result == "True" :
+            serve(clientsocket, uname, key2)
         else :
             clientsocket.close()
             # ??????
+
+if __name__ == '__main__' :
+    main()
