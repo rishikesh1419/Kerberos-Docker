@@ -9,6 +9,7 @@ def take_input() :
     uname = input("Enter username: ")
     pw = input("Enter your 16-digit password: ").encode()
     word = b'cloud  computing'
+    # Generate key1 using password (AES)
     cipher = AES.new(pw, AES.MODE_ECB)
     key1 = cipher.encrypt(word)
     return uname, key1
@@ -18,26 +19,30 @@ def connect_as(uname) :
     as_port = 2000 # AS Port
     clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     clientsocket.connect((as_addr, as_port))
+    # Send username to AS (Request for a ticket to TGS)
+    print("Request sent to AS.")
     clientsocket.send(uname.encode())
+    # Receive the ticket
     packet1 = clientsocket.recv(1024)
     clientsocket.send("DONE".encode())
     clientsocket.close()
     return packet1
 
 def connect_tgs(packet1a, key1) :
+    # Decrypt the packet1a received from AS using key1 (AES)
+    # Packet1a has a secret AES key between client and TGS (c_tgs_key) and ticket to TGS (ticket1)
     cipher = AES.new(key1, AES.MODE_ECB)
     packet1b = cipher.decrypt(packet1a)
-    print(packet1b)
+    # print(packet1b)
+    print("Authenticated by AS.")
     packet1 = unpad(packet1b, 16)
     packet1 = packet1.split(b",,,")
     if len(packet1) != 2 :
         print("Invalid credentials 1!")
         exit(0)
-    # check exit(0)
     c_tgs_key = packet1[0]
     ticket1 = packet1[1]
     timestamp1 = str(datetime.utcnow()).encode()
-    # TIMESTAMP FORMAT
     cipher2 = AES.new(c_tgs_key, AES.MODE_ECB)
     timestamp1a = pad(timestamp1, 16)
     timestamp = cipher2.encrypt(timestamp1a)
@@ -56,7 +61,7 @@ def connect_tgs(packet1a, key1) :
     return packet3, c_tgs_key
 
 def connect_server(packet3, c_tgs_key) :
-    print("Inside connect_server")
+    print("Ticket received from TGS, connecting to server.")
     packet3 = packet3.split(b",,,")
     if len(packet3) != 2 :
         print("Invalid credentials 2!")
@@ -92,6 +97,7 @@ def connect_server(packet3, c_tgs_key) :
         return "False", clientsocket, key2
 
 def communicate_server(clientsocket, key2) :
+    print("Server connected!")
     text = input("Enter string: ").encode()
     while text != b"EXIT" :
 

@@ -5,6 +5,7 @@ from Crypto.Util.Padding import pad, unpad
 import rsa
 import random
 import string
+from time import sleep
 
 def main() :
     with open('pub_tgs_server.pem', mode='rb') as private1file:
@@ -17,6 +18,7 @@ def main() :
     tgs_addr = socket.gethostname()
     tgs_port = 3000
     serversocket.bind((tgs_addr, tgs_port))
+    print("Ticket granting server strtaed.")
     while True :
         serversocket.listen(5)
         clientsocket, addr = serversocket.accept()
@@ -38,6 +40,7 @@ def main() :
                 print("error")
             else :
                 uname = ticket1[0]
+                print("Client", uname.decode() , " requesting for server-" + serverID.decode())
                 c_tgs_key = ticket1[1]
                 cipher = AES.new(c_tgs_key, AES.MODE_ECB)
                 timestamp1 = cipher.decrypt(timestamp)
@@ -50,6 +53,7 @@ def main() :
                     # do something
                     print("error")
                 else :
+                    print("Timestamp verified.")
                     key2 = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(16)).encode()
                     ticket2a = serverID + b",,," + key2
                     ticket2b = pad(ticket2a, 16)
@@ -58,8 +62,9 @@ def main() :
                     # Encrypt ticket3 using public tgs_server_key (RSA)
                     ticket3 = rsa.encrypt(ticket3a, pub_tgs_server)
                     packet3 = ticket2 + b",,," + ticket3
+                    sleep(1.0)
                     clientsocket.send(packet3)
-                    print("Tickets send to client,",uname.decode())
+                    print("Tickets send to client,",uname.decode()+". Connection closed.")
                     clientsocket.close()
 
 if __name__ == '__main__' :

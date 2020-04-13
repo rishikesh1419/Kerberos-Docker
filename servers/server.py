@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
 import rsa
+from time import sleep
 
 def check(clientsocket) :
     #
@@ -47,13 +48,14 @@ def check(clientsocket) :
                 timestamp1a = pad(timestamp1b, 16)
                 timestamp1 = cipher2.encrypt(timestamp1a)
                 clientsocket.send(timestamp1)
-                print("check done")
+                print("Ticket verified.")
                 return "True", uname, key2
                     
 
 def serve(clientsocket, uname, key2) :
     # Start timer
     time1 = datetime.utcnow()
+    print("Serving client " + uname.decode() + ".")
     while True :
         time2 = datetime.utcnow()
         # Check timer
@@ -68,8 +70,11 @@ def serve(clientsocket, uname, key2) :
             packet5a = cipher2.decrypt(packet5b)
             packet5 = unpad(packet5a, 16)
             text = packet5.decode()
+            print("Received query:", text)
             # Process packet5 text
             result1a = text[::-1].encode()
+            sleep(1.0)
+            print("Result sent:", text[::-1])
             result1 = pad(result1a, 16)
             result = cipher2.encrypt(result1)
             clientsocket.send(result)
@@ -86,9 +91,10 @@ def main() :
     srv_port = 4000
     serversocket.bind((srv_addr, srv_port))
     serversocket.listen(5)
+    print("Server started.")
     while True :
         clientsocket, addr = serversocket.accept()
-        print("Client connected!")
+        print("Incoming client...")
         result, uname, key2 = check(clientsocket)
         print(key2)
         if result == "True" :
